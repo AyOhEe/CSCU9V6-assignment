@@ -2,37 +2,39 @@ import java.util.*;
 
 public class C_buffer {
 	
-    private Vector<Object> data;
+    private Vector<CoordinatorRequest> data;
     
     public C_buffer (){
-    	data = new Vector<Object>(); 
+    	data = new Vector<>();
     }    
 
     public int size(){
     	return data.size();
     }
 
-    public synchronized void saveRequest (String[] r){
-    	data.add(r[0]);
-    	data.add(r[1]);    
+    public synchronized void saveRequest (CoordinatorRequest r){
+    	data.add(r);
     }
 
     public void show(){
-		for (int i=0; i<data.size();i++)
-		    System.out.print(" "+data.get(i)+" ");
+        StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < data.size(); i++) {
+            sb.append(data.get(i)).append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
 		System.out.println(" ");
     }
     
-    public void add(Object o){
+    public void add(CoordinatorRequest o){
     	data.add(o);
     }
 
-    synchronized public Object  get(){
-    	Object o = null; 
-	
+    synchronized public CoordinatorRequest  get(){
+    	CoordinatorRequest request = null;
 		if (!data.isEmpty()){
-		    o = data.removeFirst();
+		    request = data.removeFirst();
 		}
-		return o;
+
+		return request;
     }
 }
