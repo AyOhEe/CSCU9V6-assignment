@@ -6,7 +6,7 @@ public class C_receiver extends Thread{
     private int 		port;
     private ServerSocket 	s_socket; 
     private Socket		socketFromNode;
-    private C_Connection_r	connect;
+    private CoordinatorConnection connect;
     
     public C_receiver (CoordinatorBuffer b, int p){
 		buffer = b;
