@@ -1,7 +1,7 @@
 import java.util.*;
 
 /**
- *
+ * Keeps track of all {@link CoordinatorRequest}s and the order in which they were received
  */
 public class CoordinatorBuffer {
 	/** {@link Vector} containing the {@link CoordinatorRequest}s stored in this buffer */
@@ -31,7 +31,7 @@ public class CoordinatorBuffer {
         for (CoordinatorRequest request : requests) {
             sb.append(request).append(", ");
         }
-        // We'd have extraneous commas if we don't delete the last one that was added - another benefit of using a StringBuilder here
+        // We'd have an extraneous comma if we don't delete the last one that was added - another benefit of using a StringBuilder here
         sb.delete(sb.length() - 2, sb.length());
 
 		System.out.println(sb);
