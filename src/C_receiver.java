@@ -2,13 +2,13 @@ import java.net.*;
 
 public class C_receiver extends Thread{
     
-    private C_buffer 	 buffer; 
+    private CoordinatorBuffer buffer;
     private int 		port;
     private ServerSocket 	s_socket; 
     private Socket		socketFromNode;
     private C_Connection_r	connect;
     
-    public C_receiver (C_buffer b, int p){
+    public C_receiver (CoordinatorBuffer b, int p){
 		buffer = b;
 		port = p;
     }

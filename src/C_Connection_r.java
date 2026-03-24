@@ -6,12 +6,12 @@ import java.io.*;
 public class C_Connection_r extends Thread {
 	
     // class variables
-    C_buffer requestBuffer;
+    CoordinatorBuffer requestBuffer;
     Socket socket;
     InputStream inputStream;
     BufferedReader bufferedReader;
        	
-    public C_Connection_r(Socket s, C_buffer b){
+    public C_Connection_r(Socket s, CoordinatorBuffer b){
     	this.socket = s;
     	this.requestBuffer = b;
     }

@@ -1,7 +1,7 @@
 import java.net.*;
 
 public class C_mutex extends Thread{
-    C_buffer buffer;
+    CoordinatorBuffer buffer;
     Socket   s;
     int      port;
 
@@ -10,7 +10,7 @@ public class C_mutex extends Thread{
     String n_host;
     int    n_port;
 	
-    public C_mutex (C_buffer b, int p){
+    public C_mutex (CoordinatorBuffer b, int p){
 		buffer = b;
 		port = p;
     }
