@@ -9,6 +9,11 @@ public class CoordinatorMutex extends Thread {
 	/** The port on which to listen for incoming {@link Node} connections */
     private final int port;
 
+	/**
+	 * Creates a new {@link CoordinatorMutex}
+	 * @param buffer The {@link CoordinatorBuffer} to store {@link CoordinatorRequest}s in
+	 * @param port The port on which to listen for incoming {@link Node} connections
+	 */
     public CoordinatorMutex(CoordinatorBuffer buffer, int port){
 		this.buffer = buffer;
 		this.port = port;
@@ -16,46 +21,48 @@ public class CoordinatorMutex extends Thread {
 
     public void run() {
 		try {
-			//  >>>  Listening from the server socket on the given port
-			// from where the TOKEN will be returned later.
+			// Create the SocketServer where tokens are returned after Nodes finish processing.
 			ServerSocket returnServer = new ServerSocket(port);
 
+			// Start serving requests
 			while (true) {
-				// >>> Print some info on the current buffer content for debugging purposes.
-				// >>> please look at the available methods in C_buffer
-
-				System.out.println("<CoordinatorMutex> Buffer size is " + buffer.size());
-
-				// if the buffer is not empty
-				if (buffer.size() != 0) {
-
-					// >>>   Getting the first (FIFO) node that is waiting for a TOKEN form the buffer
-					//       Type conversions may be needed.
-
-					CoordinatorRequest nextRequest = buffer.getRequest();
-
-
-					// >>>  **** Granting the token
-					//
-					try {
-
-					} catch (java.io.IOException e) {
-						System.out.println(e);
-						System.out.println("CRASH Mutex connecting to the node for granting the TOKEN" + e);
-					}
-
-
-					//  >>>  **** Getting the token back
-					try {
-						// THIS IS BLOCKING !
-					} catch (java.io.IOException e) {
-						System.out.println(e);
-						System.out.println("CRASH Mutex waiting for the TOKEN back" + e);
-					}
-				}
+				processRequest(returnServer);
 			}
 		} catch (Exception e) {
-			System.out.print(e);
+			System.out.println("<CoordinatorMutex> Exception occurred when creating ServerSocket: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
+	}
+
+	/**
+	 * Retrieves and handles a single {@link CoordinatorRequest}. Sleeps for 1000ms if {@link CoordinatorMutex#buffer} is empty.
+	 * @param returnServer The {@link ServerSocket} on which to listen for tokens being returned
+	 */
+	private void processRequest(ServerSocket returnServer) {
+		// Print some info on the current buffer content for debugging purposes.
+		System.out.println("<CoordinatorMutex> Buffer size is " + buffer.size() + ":");
+		buffer.show();
+
+		// Grab the request object for the next Node in the queue (FIFO)
+		CoordinatorRequest nextRequest = buffer.getRequest();
+
+		// Grant the token
+		try {
+			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
+		} catch (java.io.IOException e) {
+			System.out.println("<CoordinatorMutex> Exception occurred when passing token to Node: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
+
+		// Retrieve the token
+		try {
+			returnServer.accept();
+		} catch (java.io.IOException e) {
+			System.out.println("<CoordinatorMutex> Exception occurred when waiting for the token to be returned: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
 		}
 	}
 }
