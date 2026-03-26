@@ -1,12 +1,10 @@
 import java.net.*;
 
 public class Coordinator {
-	
     public static void main (String args[]){
-		int port = 7000;
-		
-		Coordinator c = new Coordinator ();
-		
+		int receiverPort = 7000;
+		int mutexPort = 7001;
+
 		try {    
 		    InetAddress c_addr = InetAddress.getLocalHost();
 		    String c_name = c_addr.getHostName();
@@ -19,10 +17,21 @@ public class Coordinator {
 		}
 				
 		// allows defining port at launch time
-		if (args.length == 1) port = Integer.parseInt(args[0]);
+		if (args.length == 2) {
+			receiverPort = Integer.parseInt(args[0]);
+			mutexPort = Integer.parseInt(args[1]);
+		} else if (args.length != 0) {
+			System.out.println("Usage: [receiver-port] [mutex-port]");
+			System.exit(1);
+		}
 	
-		// Create and run a C_receiver and a C_mutex object sharing a C_buffer object
+		// Create and run a CoordinatorReceiver and a CoordinatorMutex object sharing a CoordinatorBuffer object
+		CoordinatorBuffer buffer = new CoordinatorBuffer();
+		CoordinatorReceiver receiver = new CoordinatorReceiver(buffer, receiverPort);
+		CoordinatorMutex mutex = new CoordinatorMutex(buffer, mutexPort);
 
+		// Start the threads
+		receiver.start();
+		mutex.start();
     }
-    
 }
