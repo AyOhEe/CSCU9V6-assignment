@@ -19,28 +19,32 @@ public class CoordinatorBuffer {
      * @param r The {@link CoordinatorRequest} to save
      */
     public void saveRequest(CoordinatorRequest r) {
-    	requests.add(r);
-        requests.notifyAll();
+        synchronized(requests) {
+            requests.add(r);
+            requests.notifyAll();
+        }
     }
 
     /**
      * Prints a string representation of every {@link CoordinatorRequest} stored in this buffer to {@link System#out}
      */
     public void show() {
-        if (requests.isEmpty()) {
-            System.out.println("<CoordinatorBuffer> Buffer empty.");
-            return;
-        }
+        synchronized(requests) {
+            // Show nothing if the queue is empty.
+            if (requests.isEmpty()) {
+                return;
+            }
 
-        // Using a StringBuilder here means we don't constantly create new String objects. It's a little better on memory and compute.
-        StringBuilder sb = new StringBuilder();
-        for (CoordinatorRequest request : requests) {
-            sb.append(request).append(", ");
-        }
-        // We'd have an extraneous comma if we don't delete the last one that was added - another benefit of using a StringBuilder here
-        sb.delete(sb.length() - 2, sb.length());
+            // Using a StringBuilder here means we don't constantly create new String objects. It's a little better on memory and compute.
+            StringBuilder sb = new StringBuilder();
+            for (CoordinatorRequest request : requests) {
+                sb.append(request).append(", ");
+            }
+            // We'd have an extraneous comma if we don't delete the last one that was added - another benefit of using a StringBuilder here
+            sb.delete(sb.length() - 2, sb.length());
 
-		System.out.println("<CoordinatorBuffer> " + sb);
+            System.out.println("<CoordinatorBuffer> Requests: " + sb);
+        }
     }
 
     /**
