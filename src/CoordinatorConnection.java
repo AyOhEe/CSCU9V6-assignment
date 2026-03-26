@@ -24,6 +24,7 @@ public class CoordinatorConnection extends Thread {
 	@Override
     public void run() {
 		System.out.println("<CoordinatorConnection> dealing with request from socket " + socket);
+		CommonUtil.nap(500);
 		try {
 			// Configure our stream
 		    InputStream inputStream = socket.getInputStream();
@@ -33,15 +34,17 @@ public class CoordinatorConnection extends Thread {
 			String host = bufferedReader.readLine();
 			int port = Integer.parseInt(bufferedReader.readLine());
 			CoordinatorRequest request = new CoordinatorRequest(host, port);
+			System.out.println("<CoordinatorConnection> received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
 
-			// Pass the CoordinatorRequest to the buffer
-			requestBuffer.saveRequest(request);
-			requestBuffer.show();
+			// Pass the CoordinatorRequest to the buffer. This has to be synchronized as the request could be
+			// handled before we can output to console.
+			synchronized(requestBuffer) {
+				requestBuffer.saveRequest(request);
+				requestBuffer.show();
+			}
 
 			// And close out.
 		    socket.close();
-		    System.out.println("<CoordinatorConnection> received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
-		    	
 		} 
 		catch (IOException e){
 			System.out.println("<CoordinatorConnection> Exception occurred in CoordinatorConnection: ");
