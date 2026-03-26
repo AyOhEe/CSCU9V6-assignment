@@ -26,6 +26,11 @@ public class CoordinatorBuffer {
      * Prints a string representation of every {@link CoordinatorRequest} stored in this buffer to {@link System#out}
      */
     public void show() {
+        if (requests.isEmpty()) {
+            System.out.println("Buffer empty.");
+            return;
+        }
+
         // Using a StringBuilder here means we don't constantly create new String objects. It's a little better on memory and compute.
         StringBuilder sb = new StringBuilder();
         for (CoordinatorRequest request : requests) {
