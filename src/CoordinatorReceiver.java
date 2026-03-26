@@ -15,12 +15,12 @@ public class CoordinatorReceiver extends Thread {
 	 * @param buffer The {@link CoordinatorBuffer} to pass to {@link CoordinatorConnection} handlers
 	 * @param port The port on which to listen for incoming {@link Node} connections
 	 */
-	public CoordinatorReceiver(CoordinatorBuffer buffer, int port){
+	public CoordinatorReceiver(CoordinatorBuffer buffer, int port) {
 		this.buffer = buffer;
 		this.port = port;
     }
     
-    public void run () {
+    public void run() {
 		ServerSocket receiverServer;
 		try {
 			// >>> create the socket the server will listen to

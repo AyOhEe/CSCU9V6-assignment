@@ -16,7 +16,7 @@ public class CoordinatorConnection extends Thread {
 	 * @param socket The {@link Socket} to listen from
 	 * @param buffer The buffer in which to store a {@link CoordinatorRequest} object
 	 */
-	public CoordinatorConnection(Socket socket, CoordinatorBuffer buffer){
+	public CoordinatorConnection(Socket socket, CoordinatorBuffer buffer) {
     	this.socket = socket;
     	this.requestBuffer = buffer;
     }

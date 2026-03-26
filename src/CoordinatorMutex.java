@@ -15,7 +15,7 @@ public class CoordinatorMutex extends Thread {
 	 * @param buffer The {@link CoordinatorBuffer} to store {@link CoordinatorRequest}s in
 	 * @param port The port on which to listen for incoming {@link Node} connections
 	 */
-    public CoordinatorMutex(CoordinatorBuffer buffer, int port){
+    public CoordinatorMutex(CoordinatorBuffer buffer, int port) {
 		this.buffer = buffer;
 		this.port = port;
     }

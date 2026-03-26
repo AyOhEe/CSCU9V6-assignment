@@ -18,7 +18,7 @@ public class CoordinatorBuffer {
      * Saves a new request to the buffer
      * @param r The {@link CoordinatorRequest} to save
      */
-    public void saveRequest(CoordinatorRequest r){
+    public void saveRequest(CoordinatorRequest r) {
     	requests.add(r);
         requests.notifyAll();
     }
