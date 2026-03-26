@@ -46,12 +46,13 @@ public class CoordinatorReceiver extends Thread {
 			// Accept a new connection
 			Socket nodeSocket = receiverServer.accept();
 			System.out.println("<CoordinatorReceiver> Coordinator has received a request ...");
+			CommonUtil.nap(500);
 
 			// Create a CoordinatorConnection thread to handle the request
 			CoordinatorConnection connection = new CoordinatorConnection(nodeSocket, buffer);
 			connection.start();
 
-		} catch (java.io.IOException e) {
+		} catch (IOException e) {
 			System.out.println("<CoordinatorReceiver> Exception when accepting a connection: ");
 			e.printStackTrace(System.out);
 			System.exit(1);
