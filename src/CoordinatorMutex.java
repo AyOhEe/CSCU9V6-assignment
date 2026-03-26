@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.*;
 
 /**
@@ -19,6 +20,7 @@ public class CoordinatorMutex extends Thread {
 		this.port = port;
     }
 
+	@Override
     public void run() {
 		try {
 			// Create the SocketServer where tokens are returned after Nodes finish processing.
@@ -28,7 +30,7 @@ public class CoordinatorMutex extends Thread {
 			while (true) {
 				processRequest(returnServer);
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when creating ServerSocket: ");
 			e.printStackTrace(System.out);
 			System.exit(1);
@@ -50,7 +52,7 @@ public class CoordinatorMutex extends Thread {
 		// Grant the token
 		try {
 			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
-		} catch (java.io.IOException e) {
+		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when passing token to Node: ");
 			e.printStackTrace(System.out);
 			System.exit(1);
@@ -59,7 +61,7 @@ public class CoordinatorMutex extends Thread {
 		// Retrieve the token
 		try {
 			returnServer.accept();
-		} catch (java.io.IOException e) {
+		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when waiting for the token to be returned: ");
 			e.printStackTrace(System.out);
 			System.exit(1);

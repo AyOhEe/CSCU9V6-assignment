@@ -20,7 +20,8 @@ public class CoordinatorConnection extends Thread {
     	this.socket = socket;
     	this.requestBuffer = buffer;
     }
-    
+
+	@Override
     public void run() {
 		System.out.println("<CoordinatorConnection> dealing with request from socket " + socket);
 		try {
@@ -42,7 +43,7 @@ public class CoordinatorConnection extends Thread {
 		    System.out.println("<CoordinatorConnection> received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
 		    	
 		} 
-		catch (java.io.IOException e){
+		catch (IOException e){
 			System.out.println("<CoordinatorConnection> Exception occurred in CoordinatorConnection: ");
 			e.printStackTrace(System.out);
 			System.exit(1);
