@@ -28,7 +28,7 @@ public class CoordinatorBuffer {
      */
     public void show() {
         if (requests.isEmpty()) {
-            System.out.println("Buffer empty.");
+            System.out.println("<CoordinatorBuffer> Buffer empty.");
             return;
         }
 
@@ -40,7 +40,7 @@ public class CoordinatorBuffer {
         // We'd have an extraneous comma if we don't delete the last one that was added - another benefit of using a StringBuilder here
         sb.delete(sb.length() - 2, sb.length());
 
-		System.out.println(sb);
+		System.out.println("<CoordinatorBuffer> " + sb);
     }
 
     /**

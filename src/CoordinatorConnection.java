@@ -22,29 +22,30 @@ public class CoordinatorConnection extends Thread {
     }
     
     public void run() {
-		System.out.println("<CoordinatorConnection: IN>  dealing with request from socket " + socket);
+		System.out.println("<CoordinatorConnection> dealing with request from socket " + socket);
 		try {
-		    // >>> read the request, i.e. node ip and port from the socket s
-		    // >>> save it in a request object and save the object in the buffer (see C_buffer's methods).
-	
+			// Configure our stream
 		    InputStream inputStream = socket.getInputStream();
 		    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
+			// Read the host and port and store them as a CoordinatorRequest object
 			String host = bufferedReader.readLine();
 			int port = Integer.parseInt(bufferedReader.readLine());
 			CoordinatorRequest request = new CoordinatorRequest(host, port);
 
+			// Pass the CoordinatorRequest to the buffer
 			requestBuffer.saveRequest(request);
-		    
+			requestBuffer.show();
+
+			// And close out.
 		    socket.close();
-		    System.out.println("<CoordinatorConnection: OUT>  received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
+		    System.out.println("<CoordinatorConnection> received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
 		    	
 		} 
 		catch (java.io.IOException e){
-				System.out.println(e);
-				System.exit(1);
+			System.out.println("<CoordinatorConnection> Exception occurred in CoordinatorConnection: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
 		}
-
-		requestBuffer.show();
  	}
 }
