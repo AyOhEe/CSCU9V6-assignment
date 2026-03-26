@@ -43,7 +43,7 @@ public class CoordinatorMutex extends Thread {
 	 */
 	private void processRequest(ServerSocket returnServer) {
 		// Print some info on the current buffer content for debugging purposes.
-		System.out.println("<CoordinatorMutex> Buffer size is " + buffer.size() + ":");
+		System.out.println("<CoordinatorMutex> Buffer size is: " + buffer.size());
 		buffer.show();
 
 		// Grab the request object for the next Node in the queue (FIFO)
@@ -51,6 +51,7 @@ public class CoordinatorMutex extends Thread {
 
 		// Grant the token
 		try {
+			System.out.println("<CoordinatorMutex> Sending token to " + nextRequest.host() + ":" + nextRequest.port());
 			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
 			// TODO send message representing token
 		} catch (IOException e) {
@@ -61,7 +62,9 @@ public class CoordinatorMutex extends Thread {
 
 		// Retrieve the token
 		try {
+			System.out.println("<CoordinatorMutex> Waiting for token to be returned...");
 			returnServer.accept();
+			System.out.println("<CoordinatorMutex> Token returned");
 			// TODO read token back, complain if different from expected
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when waiting for the token to be returned: ");
