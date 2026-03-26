@@ -1,26 +1,30 @@
 import java.net.*;
 
 public class Coordinator {
-    public static void main (String args[]){
+    public static void main (String[] args){
+		// Defaults specified in assignment spec
 		int receiverPort = 7000;
 		int mutexPort = 7001;
 
+		// Log the address that we're listening on
 		try {    
-		    InetAddress c_addr = InetAddress.getLocalHost();
-		    String c_name = c_addr.getHostName();
-		    System.out.println ("Coordinator address is "+c_addr);
-		    System.out.println ("Coordinator host name is "+c_name+"\n\n");    
+		    InetAddress localhost = InetAddress.getLocalHost();
+		    String hostname = localhost.getHostName();
+		    System.out.println("Coordinator address is " + localhost);
+		    System.out.println("Coordinator host name is " + hostname + "\n\n");
 		}
 		catch (Exception e) {
-		    System.err.println(e);
-		    System.err.println("Error in corrdinator");
+			System.out.println("<Coordinator> Exception occurred when detecting localhost address: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
 		}
 				
-		// allows defining port at launch time
+		// Check to see if we were passed specific port numbers
 		if (args.length == 2) {
 			receiverPort = Integer.parseInt(args[0]);
 			mutexPort = Integer.parseInt(args[1]);
 		} else if (args.length != 0) {
+			// Being passed no arguments implies that we should use the defaults, but any other number is incorrect
 			System.out.println("Usage: [receiver-port] [mutex-port]");
 			System.exit(1);
 		}
