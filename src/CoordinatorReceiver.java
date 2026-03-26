@@ -6,9 +6,9 @@ import java.net.*;
  */
 public class CoordinatorReceiver extends Thread {
     /** The {@link CoordinatorBuffer} to pass to {@link CoordinatorConnection} handlers */
-    private CoordinatorBuffer buffer;
+    private final CoordinatorBuffer buffer;
 	/** The port on which to listen for incoming {@link Node} connections */
-    private int port;
+    private final int port;
 
 	/**
 	 * Creates a new {@link CoordinatorReceiver}
@@ -19,30 +19,42 @@ public class CoordinatorReceiver extends Thread {
 		this.buffer = buffer;
 		this.port = port;
     }
-    
+
+	@Override
     public void run() {
-		ServerSocket receiverServer;
 		try {
-			// >>> create the socket the server will listen to
-			receiverServer = new ServerSocket(port);
-		} catch (IOException e) {
-            System.out.println("Exception when creating CoordinatorReceiver ServerSocket " + e);
-			return;
-        }
+			// Create the socket that the server will listen to
+			ServerSocket receiverServer = new ServerSocket(port);
 
-        while (true) {
-			try {
-				// >>> get a new connection
-				Socket nodeSocket = receiverServer.accept();
-				System.out.println("CoordinatorReceiver    Coordinator has received a request ...");
-
-				// >>> create a separate thread to service the request, a CoordinatorConnection thread.
-				CoordinatorConnection connection = new CoordinatorConnection(nodeSocket, buffer);
-				connection.start();
-
-			} catch (java.io.IOException e) {
-				System.out.println("Exception when creating a connection " + e);
+			// Start serving requests
+			while (true) {
+				processRequest(receiverServer);
 			}
+		} catch (IOException e) {
+            System.out.println("<CoordinatorReceiver> Exception occurred when creating ServerSocket: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+        }
+	}
+
+	/**
+	 * Accepts a single request and creates a new {@link CoordinatorConnection} thread to handle it.
+	 * @param receiverServer The {@link ServerSocket} on which to listen for incoming requests
+	 */
+	private void processRequest(ServerSocket receiverServer) {
+		try {
+			// Accept a new connection
+			Socket nodeSocket = receiverServer.accept();
+			System.out.println("<CoordinatorReceiver> Coordinator has received a request ...");
+
+			// Create a CoordinatorConnection thread to handle the request
+			CoordinatorConnection connection = new CoordinatorConnection(nodeSocket, buffer);
+			connection.start();
+
+		} catch (java.io.IOException e) {
+			System.out.println("<CoordinatorReceiver> Exception when accepting a connection: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
 		}
 	}
 }

@@ -52,6 +52,7 @@ public class CoordinatorMutex extends Thread {
 		// Grant the token
 		try {
 			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
+			// TODO send message representing token
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when passing token to Node: ");
 			e.printStackTrace(System.out);
@@ -61,6 +62,7 @@ public class CoordinatorMutex extends Thread {
 		// Retrieve the token
 		try {
 			returnServer.accept();
+			// TODO read token back, complain if different from expected
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when waiting for the token to be returned: ");
 			e.printStackTrace(System.out);
