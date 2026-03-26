@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.net.*;
 
 /**
- * Handles incoming {@link Node} connections, passing them to {@link CoordinatorConnection} threads to be resolved
+ * Handles incoming {@link Node} connections, passing them to {@link CoordinatorConnection} threads to be stored and handled by {@link CoordinatorMutex}
  */
 public class CoordinatorReceiver extends Thread {
     /** The {@link CoordinatorBuffer} to pass to {@link CoordinatorConnection} handlers */

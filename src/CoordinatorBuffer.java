@@ -40,7 +40,7 @@ public class CoordinatorBuffer {
     /**
      * @return The next {@link CoordinatorRequest} in the buffer, or {@code null} if the buffer is empty
      */
-    synchronized public CoordinatorRequest getRequest() {
+    public synchronized  CoordinatorRequest getRequest() {
     	CoordinatorRequest request = null;
 		if (!requests.isEmpty()){
 		    request = requests.removeFirst();
