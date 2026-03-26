@@ -1,84 +1,123 @@
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.*;
-import java.io.*;
-import java.util.*;
 
-public class Node{
+/**
+ * Repeatedly sends token requests to the address of a {@link Coordinator}
+ */
+public class Node extends Thread {
 
-    private Random ra;
-    private Socket	s;
-    private PrintWriter pout = null;
-    private ServerSocket n_ss;
-    private Socket	n_token;
-    String	c_host = "127.0.0.1";
-    int 	c_request_port = 7000;
-    int 	c_return_port = 7001;
-    String	n_host = "127.0.0.1";
-    String 	n_host_name;
-    int     n_port;
-    
-    public Node(String nam, int por, int sec){	
-		ra = new Random();
-		n_host_name = nam;
-		n_port = por;
-	
-    	System.out.println("Node " +n_host_name+ ":" +n_port+ " of DME is active ....");
+	/** The hostname which this {@link Node} will listen on */
+	private final String hostname;
+	/** The port which this {@link Node} will listen on */
+	private final int localPort;
+	/** The hostname of the {@link Coordinator} */
+	private final String coordinatorHostname;
+	/** The port of the {@link CoordinatorReceiver} */
+	private final int requestPort;
+	/** The port of the {@link CoordinatorMutex} */
+	private final int returnPort;
+	/** On average, how long should the critical section wait for? */
+	private final int meanDelay;
 
-    	// NODE sends n_host and n_port  through a socket s to the coordinator
-    	// c_host:c_req_port
-    	// and immediately opens a server socket through which will receive 
-    	// a TOKEN (actually just a synchronization).
-    
-    	while(true){
-    
-	    // >>>  sleep a random number of seconds linked to the initialisation sec value
-    		
-    		try {
+	/**
+	 * Creates a new {@link Node}
+	 * @param hostname The hostname which this {@link Node} will listen on
+	 * @param localPort The port which this {@link Node} will listen on
+	 * @param coordinatorHostname The hostname of the {@link Coordinator}
+	 * @param requestPort The port of the {@link CoordinatorReceiver}
+	 * @param returnPort The port of the {@link CoordinatorMutex}
+	 * @param meanDelay On average, how long should the critical section wait for?
+	 */
+	public Node(String hostname, int localPort, String coordinatorHostname, int requestPort, int returnPort, int meanDelay) {
+		this.hostname = hostname;
+		this.localPort = localPort;
+		this.coordinatorHostname = coordinatorHostname;
+		this.requestPort = requestPort;
+		this.returnPort = returnPort;
+		this.meanDelay = meanDelay;
+	}
 
-		    // **** Send to the coordinator a token request.
-		    // send your ip address and port number
-    		
-		    // **** Then Wait for the token
-		    // Print suitable messages
+	@Override
+	public void run() {
+		System.out.println("<Node> Active at " + hostname + ":" + localPort);
 
-		    // **** Sleep for a while
-		    // This is the critical session
+		while (true) {
+			// Wait a little bit between requests
+			CommonUtil.randomNap(100);
 
-		    // **** Return the token
-		    // Print suitable messages - also considering communication failures 
+			try {
+				// **** Send to the coordinator a token request.
+				// send your ip address and port number
+				System.out.println("<Node> Sending token request to Coordinator");
+				Socket requestSocket = new Socket(coordinatorHostname, requestPort);
+				PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
+				requestWriter.println(hostname);
+				requestWriter.println(localPort);
+				requestSocket.close();
 
-    		}
-    		catch (java.io.IOException e) {
-		    System.out.println(e);
-		    System.exit(1);	
-    		}
-    	}
-    }
-    
-    public static void main (String args[]){
-		String n_host_name = ""; 
-		int n_port;
-		
-		// port and millisec (average waiting time) are specific of a node
-		if ((args.length < 1) || (args.length > 2)){
-		    System.out.print("Usage: Node [port number] [millisecs]");
-		    System.exit(1);
+				// **** Then Wait for the token
+				// Print suitable messages
+				ServerSocket tokenServer = new ServerSocket(localPort);
+				Socket tokenSocket = tokenServer.accept();
+				tokenSocket.close();
+				tokenServer.close();
+				System.out.println("<Node> Token received!");
+				// Small nap for readability
+				CommonUtil.nap(500);
+
+				// Pretend to do something important. This emulates a critical section
+				System.out.println("<Node> Entering critical section");
+				CommonUtil.randomNap(meanDelay);
+				System.out.println("<Node> Leaving critical section");
+
+				// **** Return the token
+				// Print suitable messages - also considering communication failures
+				Socket returnSocket = new Socket(coordinatorHostname, returnPort);
+				returnSocket.close();
+				System.out.println("<Node> Token returned");
+
+			} catch (IOException e) {
+				System.out.println(e);
+				System.exit(1);
+			}
 		}
-		
-		// get the IP address and the port number of the node
-	 	try{ 
-		    InetAddress n_inet_address =  InetAddress.getLocalHost() ;
-		    n_host_name = n_inet_address.getHostName();
-		    System.out.println ("node hostname is " +n_host_name+":"+n_inet_address);
-	    	}
-	    	catch (java.net.UnknownHostException e){
-		    System.out.println(e);
-		    System.exit(1);
-	    	} 
-		
-		n_port = Integer.parseInt(args[0]);
-		System.out.println ("node port is "+n_port);
-	    Node n = new Node(n_host_name, n_port, Integer.parseInt(args[1]));
-    }
-    
-    
+	}
+
+
+
+	public static void main(String args[]) {
+		// Port and average waiting time are specific to a node. The others are just configurable
+		if (args.length != 5) {
+			System.out.print("Usage: Node [port number] [coordinator host] [request port] [return port] [millisecs]");
+			System.exit(1);
+		}
+
+		// Get the IP address of this machine
+		String hostname;
+		try {
+			InetAddress localhost = InetAddress.getLocalHost();
+			hostname = localhost.getHostName();
+			System.out.println("Node address is " + localhost);
+			System.out.println("Node host name is " + hostname);
+		} catch (java.net.UnknownHostException e) {
+			System.out.println("<Node> Exception occurred when detecting localhost address: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+			return; // Yes, this unreachable. Java doesn't care as it doesn't acknowledge that System.exit
+			        // is special and never returns.
+		}
+
+		int port = Integer.parseInt(args[0]);
+		String coordinatorHostname = args[1];
+		int requestPort = Integer.parseInt(args[2]);
+		int returnPort = Integer.parseInt(args[3]);
+		int meanDelay = Integer.parseInt(args[4]);
+		System.out.println("Node listening for responses on port " + port + "\n\n");
+		System.out.println("Node targeting requests to " + coordinatorHostname + ":" + requestPort);
+		System.out.println("Node returning to " + coordinatorHostname + ":" + returnPort);
+
+		Node n = new Node(hostname, port, coordinatorHostname, requestPort, returnPort, meanDelay);
+		n.start();
+	}
 }
