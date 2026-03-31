@@ -45,7 +45,8 @@ public class CoordinatorReceiver extends Thread {
 		try {
 			// Accept a new connection
 			Socket nodeSocket = receiverServer.accept();
-			System.out.println("<CoordinatorReceiver> Coordinator has received a request ...");
+			System.out.println("<CoordinatorReceiver> Coordinator has received a request...");
+			Coordinator.writeLogEntry("Received request. Passing to handler thread...", "CoordinatorReceiver");
 			CommonUtil.nap(500);
 
 			// Create a CoordinatorConnection thread to handle the request

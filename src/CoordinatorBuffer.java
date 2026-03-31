@@ -18,11 +18,9 @@ public class CoordinatorBuffer {
      * Saves a new request to the buffer
      * @param r The {@link CoordinatorRequest} to save
      */
-    public void saveRequest(CoordinatorRequest r) {
-        synchronized(requests) {
-            requests.add(r);
-            requests.notifyAll();
-        }
+    public synchronized void saveRequest(CoordinatorRequest r) {
+        requests.add(r);
+        notifyAll();
     }
 
     /**
@@ -50,16 +48,14 @@ public class CoordinatorBuffer {
     /**
      * @return The next {@link CoordinatorRequest} in the buffer. If empty, blocks until a {@link CoordinatorRequest} is added.
      */
-    public CoordinatorRequest getRequest() {
-        synchronized(requests) {
-            while (requests.isEmpty()) {
-                try {
-                    requests.wait();
-                } catch (InterruptedException e) {
-                    // Pass silently
-                }
+    public synchronized CoordinatorRequest getRequest() {
+        while (requests.isEmpty()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                // Pass silently
             }
-            return requests.removeFirst();
         }
+        return requests.removeFirst();
     }
 }

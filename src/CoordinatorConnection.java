@@ -41,6 +41,7 @@ public class CoordinatorConnection extends Thread {
 			synchronized(requestBuffer) {
 				requestBuffer.saveRequest(request);
 				requestBuffer.show();
+				Coordinator.writeLogEntry("Request from " + host + ":" + port + " logged. Queue size: " + requestBuffer.size(), "CoordinatorConnection");
 			}
 
 			// And close out.

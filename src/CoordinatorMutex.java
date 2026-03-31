@@ -59,6 +59,8 @@ public class CoordinatorMutex extends Thread {
 			e.printStackTrace(System.out);
 			System.exit(1);
 		}
+		// Log that we did so
+		Coordinator.writeLogEntry("Issued token to " + nextRequest.host() + ":" + nextRequest.port(), "CoordinatorMutex");
 
 		// Retrieve the token
 		try {
@@ -71,5 +73,7 @@ public class CoordinatorMutex extends Thread {
 			e.printStackTrace(System.out);
 			System.exit(1);
 		}
+		// Log that we did so
+		Coordinator.writeLogEntry("Received token back from " + nextRequest.host() + ":" + nextRequest.port() + ". Queue size: " + buffer.size(), "CoordinatorMutex");
 	}
 }

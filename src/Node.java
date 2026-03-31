@@ -1,6 +1,8 @@
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.*;
+import java.time.LocalDateTime;
 
 /**
  * Repeatedly sends token requests to the address of a {@link Coordinator}
@@ -68,7 +70,9 @@ public class Node extends Thread {
 
 				// Pretend to do something important. This emulates a critical section
 				System.out.println("<Node> Entering critical section");
+				writeLogEntry("Entering critical section");
 				CommonUtil.randomNap(meanDelay);
+				writeLogEntry("Leaving critical section");
 				System.out.println("<Node> Leaving critical section");
 
 				// **** Return the token
@@ -119,5 +123,20 @@ public class Node extends Thread {
 
 		Node n = new Node(hostname, port, coordinatorHostname, requestPort, returnPort, meanDelay);
 		n.start();
+	}
+
+	/**
+	 * Writes the provided message to the log.
+	 */
+	public void writeLogEntry(String logEntry) {
+		try {
+			FileWriter logWriter = new FileWriter("log.txt", true);
+			logWriter.write("[" + LocalDateTime.now() + "--Node:" + localPort + "] " + logEntry + "\n");
+			logWriter.close();
+		} catch (IOException e) {
+			System.out.println("<Node:" + localPort + "> Exception occurred when writing to log: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
 	}
 }
