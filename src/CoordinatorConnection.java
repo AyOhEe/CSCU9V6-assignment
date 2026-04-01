@@ -10,15 +10,19 @@ public class CoordinatorConnection extends Thread {
     private final CoordinatorBuffer requestBuffer;
 	/** The {@link Socket} to listen from */
     private final Socket socket;
+	/** The {@link CoordinatorReceiver} that created this {@link CoordinatorConnection} */
+	private final CoordinatorReceiver receiver;
 
 	/**
 	 * Creates a new {@link CoordinatorConnection} to handle an incoming request
 	 * @param socket The {@link Socket} to listen from
 	 * @param buffer The buffer in which to store a {@link CoordinatorRequest} object
+	 * @param receiver The {@link CoordinatorReceiver} that created this {@link CoordinatorConnection}
 	 */
-	public CoordinatorConnection(Socket socket, CoordinatorBuffer buffer) {
+	public CoordinatorConnection(Socket socket, CoordinatorBuffer buffer, CoordinatorReceiver receiver) {
     	this.socket = socket;
     	this.requestBuffer = buffer;
+		this.receiver = receiver;
     }
 
 	@Override
@@ -35,6 +39,12 @@ public class CoordinatorConnection extends Thread {
 			switch (type) {
 				// Just checking that the server is still alive.
                 case "HEARTBEAT" -> {
+					socket.close();
+				}
+
+				// Shut down the Coordinator.
+				case "SHUTDOWN" -> {
+					receiver.shutdown();
 					socket.close();
 				}
 

@@ -1,6 +1,4 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 
@@ -90,9 +88,18 @@ public class Node extends Thread {
 			while (true) {
 				try {
 					Socket tokenSocket = tokenServer.accept();
+					BufferedReader tokenBuffer = new BufferedReader(new InputStreamReader(tokenSocket.getInputStream()));
+					String token = tokenBuffer.readLine();
 					tokenSocket.close();
 					tokenServer.close();
-					System.out.println("<Node> Token received!");
+
+					if (token.equals("SHUTDOWN")) {
+						System.out.println("<Node> Received shutdown instruction from server. ");
+						System.exit(0);
+						return; // Java is not convinced that this is unreachable.
+					} else {
+						System.out.println("<Node> Token received!");
+					}
 
 					// Small nap for readability
 					CommonUtil.nap(500);
@@ -158,7 +165,7 @@ public class Node extends Thread {
 	public static void main(String args[]) {
 		// Port and average waiting time are specific to a node. The others are just configurable
 		if (args.length != 6) {
-			System.out.print("Usage: Node [port number] [coordinator host] [request port] [return port] [millisecs] [PRIORITY]");
+			System.out.print("Usage: [port-number] [coordinator-host] [request-port] [return-port] [millisecs] [PRIORITY]");
 			System.exit(1);
 		}
 

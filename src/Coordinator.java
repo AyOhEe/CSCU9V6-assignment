@@ -53,8 +53,8 @@ public class Coordinator {
 
         // Create and run a CoordinatorReceiver and a CoordinatorMutex object sharing a CoordinatorBuffer object
 		CoordinatorBuffer buffer = new CoordinatorBuffer();
-		CoordinatorReceiver receiver = new CoordinatorReceiver(buffer, receiverPort);
 		CoordinatorMutex mutex = new CoordinatorMutex(buffer, mutexPort);
+		CoordinatorReceiver receiver = new CoordinatorReceiver(buffer, receiverPort, mutex);
 
 		// Start the threads
 		receiver.start();

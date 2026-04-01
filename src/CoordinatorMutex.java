@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 
 /**
@@ -9,6 +9,11 @@ public class CoordinatorMutex extends Thread {
     private final CoordinatorBuffer buffer;
 	/** The port on which to listen for incoming {@link Node} connections */
     private final int port;
+
+	/** The {@link ServerSocket} on which we're listening for tokens being returned */
+	private ServerSocket returnServer;
+	/** When true, all {@link CoordinatorRequest}s in the {@link CoordinatorMutex#buffer} will be instructed to shut down. */
+	private boolean hasShutdown = false;
 
 	/**
 	 * Creates a new {@link CoordinatorMutex}
@@ -24,11 +29,11 @@ public class CoordinatorMutex extends Thread {
     public void run() {
 		try {
 			// Create the SocketServer where tokens are returned after Nodes finish processing.
-			ServerSocket returnServer = new ServerSocket(port);
+			returnServer = new ServerSocket(port);
 
 			// Start serving requests
-			while (true) {
-				processRequest(returnServer);
+			while (!hasShutdown || buffer.size() != 0) {
+				processRequest();
 			}
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when creating ServerSocket: ");
@@ -39,21 +44,52 @@ public class CoordinatorMutex extends Thread {
 
 	/**
 	 * Retrieves and handles a single {@link CoordinatorRequest}. Sleeps for 1000ms if {@link CoordinatorMutex#buffer} is empty.
-	 * @param returnServer The {@link ServerSocket} on which to listen for tokens being returned
 	 */
-	private void processRequest(ServerSocket returnServer) {
+	private void processRequest() {
 		// Print some info on the current buffer content for debugging purposes.
 		System.out.println("<CoordinatorMutex> Buffer size is: " + buffer.size());
 		buffer.show();
 
 		// Grab the request object for the next Node in the queue (FIFO)
 		CoordinatorRequest nextRequest = buffer.getRequest();
+		if (hasShutdown) {
+			informShutdown(nextRequest);
+		} else {
+			grantToken(nextRequest);
+		}
+	}
 
-		// Grant the token
+	/**
+	 * Shuts down the node at {@code nextRequest}
+	 */
+	private void informShutdown(CoordinatorRequest nextRequest) {
+		// Inform the node of the closure
+		System.out.println("<CoordinatorMutex> Shutting down Node " + nextRequest);
 		try {
-			System.out.println("<CoordinatorMutex> Sending token to " + nextRequest);
 			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
-			// TODO send message representing token
+			PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
+			requestWriter.println("SHUTDOWN");
+			requestSocket.close();
+		} catch (IOException e) {
+			System.out.println("<CoordinatorMutex> Exception occurred when shutting down Node: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
+		// Log that we did so
+		Coordinator.writeLogEntry("Shut down Node " + nextRequest, "CoordinatorMutex");
+	}
+
+	/**
+	 * Grants the node at {@code nextRequest} the token, and waits for it to be returned
+	 */
+	private void grantToken(CoordinatorRequest nextRequest) {
+		// Grant the token
+		System.out.println("<CoordinatorMutex> Sending token to " + nextRequest);
+		try {
+			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
+			PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
+			requestWriter.println("GRANTED");
+			requestSocket.close();
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when passing token to Node: ");
 			e.printStackTrace(System.out);
@@ -63,11 +99,10 @@ public class CoordinatorMutex extends Thread {
 		Coordinator.writeLogEntry("Issued token to " + nextRequest, "CoordinatorMutex");
 
 		// Retrieve the token
+		System.out.println("<CoordinatorMutex> Waiting for token to be returned...");
 		try {
-			System.out.println("<CoordinatorMutex> Waiting for token to be returned...");
 			returnServer.accept();
 			System.out.println("<CoordinatorMutex> Token returned");
-			// TODO read token back, complain if different from expected
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when waiting for the token to be returned: ");
 			e.printStackTrace(System.out);
@@ -75,5 +110,13 @@ public class CoordinatorMutex extends Thread {
 		}
 		// Log that we did so
 		Coordinator.writeLogEntry("Received token back from " + nextRequest + ". Queue size: " + buffer.size(), "CoordinatorMutex");
+	}
+
+	/**
+	 * Starts informing {@link Node}s at {@link CoordinatorRequest}s that they should shut down.
+	 */
+	public void shutdown() {
+		System.out.println("<CoordinatorMutex> Closing... ");
+		hasShutdown = true;
 	}
 }
