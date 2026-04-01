@@ -28,7 +28,10 @@ public class CoordinatorConnection extends Thread {
 	@Override
     public void run() {
 		System.out.println("<CoordinatorConnection> dealing with request from socket " + socket);
+
+		// Wait a litle bit for console log readability
 		CommonUtil.nap(500);
+
 		try {
 			// Configure our stream
 		    InputStream inputStream = socket.getInputStream();
@@ -58,7 +61,7 @@ public class CoordinatorConnection extends Thread {
 					System.out.println("<CoordinatorConnection> received and recorded request from " + host + ":" + port + " with priority " + priority + " (socket closed)");
 
 					// Pass the CoordinatorRequest to the buffer. This has to be synchronized as the request could be
-					// handled before we can output to console.
+					// handled before we can output to the console and the log.
 					synchronized(requestBuffer) {
 						requestBuffer.saveRequest(request);
 						requestBuffer.show();

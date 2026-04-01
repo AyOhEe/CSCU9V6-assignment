@@ -1,7 +1,7 @@
 import java.util.*;
 
 /**
- * Keeps track of all {@link CoordinatorRequest}s and the order in which they were received
+ * Keeps track of all {@link CoordinatorRequest}s and releases them according to {@link CoordinatorRequest.Priority}
  */
 public class CoordinatorBuffer {
 	/** An {@link EnumMap} of {@link Queue}s containing the {@link CoordinatorRequest}s stored in this buffer */
@@ -49,7 +49,8 @@ public class CoordinatorBuffer {
             return;
         }
 
-        // Using a StringBuilder here means we don't constantly create new String objects. It's a little better on memory and compute.
+        // Using a StringBuilder here means we don't constantly create new String objects.
+        // It's technically better but doesn't really make a difference for us.
         StringBuilder sb = new StringBuilder();
         for (Queue<CoordinatorRequest> queue : requests.values()){
             for (CoordinatorRequest request : queue) {
@@ -109,7 +110,7 @@ public class CoordinatorBuffer {
 
     /**
      * Generates a sequence of {@link CoordinatorRequest.Priority} values to prevent starvation. <br/>
-     * Before repeating, each sequence will show 2^n of the highest priority, 2^(n-1) of the secont highest,
+     * Before repeating, each sequence will show 2^n of the highest priority, 2^(n-1) of the second highest,
      * 2^(n-2) of the third, etc... and exactly 1 of the lowest priority. These amounts are spread
      * evenly throughout the sequence to ensure critical nodes are still handled in a timely manner
      * without starving low priority nodes.

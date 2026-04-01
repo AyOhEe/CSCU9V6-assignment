@@ -53,7 +53,7 @@ public class Node extends Thread {
 
 		while (true) {
 			// Wait a little bit between requests
-			CommonUtil.randomNap(100);
+			CommonUtil.randomNap(meanDelay);
 
 			// Send the coordinator a token request.
 			try {

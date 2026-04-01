@@ -30,13 +30,22 @@ public class CoordinatorMutex extends Thread {
 		try {
 			// Create the SocketServer where tokens are returned after Nodes finish processing.
 			returnServer = new ServerSocket(port);
-
-			// Start serving requests
-			while (!hasShutdown || buffer.size() != 0) {
-				processRequest();
-			}
 		} catch (IOException e) {
 			System.out.println("<CoordinatorMutex> Exception occurred when creating ServerSocket: ");
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
+
+		// Start serving requests
+		while (!hasShutdown || buffer.size() != 0) {
+			processRequest();
+		}
+
+		// Close the server once we're done serving requests
+		try {
+			returnServer.close();
+		} catch (IOException e) {
+			System.out.println("<CoordinatorMutex> Exception occurred when closing ServerSocket: ");
 			e.printStackTrace(System.out);
 			System.exit(1);
 		}
