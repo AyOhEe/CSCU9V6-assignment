@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
  * Repeatedly sends token requests to the address of a {@link Coordinator}
  */
 public class Node extends Thread {
+	/** The time, in milliseconds, that a {@link Node} is willing to wait to be handled */
+	private static final int TIMEOUT_VALUE = 60000;
 
 	/** The hostname which this {@link Node} will listen on */
 	private final String hostname;
@@ -21,6 +23,8 @@ public class Node extends Thread {
 	private final int returnPort;
 	/** On average, how long should the critical section wait for? */
 	private final int meanDelay;
+	/** How urgently should this {@link Node}'s requests be responded to? */
+	private final CoordinatorRequest.Priority priority;
 
 	/**
 	 * Creates a new {@link Node}
@@ -30,14 +34,16 @@ public class Node extends Thread {
 	 * @param requestPort The port of the {@link CoordinatorReceiver}
 	 * @param returnPort The port of the {@link CoordinatorMutex}
 	 * @param meanDelay On average, how long should the critical section wait for?
+	 * @param priority How urgently should this {@link Node}'s requests be responded to?
 	 */
-	public Node(String hostname, int localPort, String coordinatorHostname, int requestPort, int returnPort, int meanDelay) {
+	public Node(String hostname, int localPort, String coordinatorHostname, int requestPort, int returnPort, int meanDelay, CoordinatorRequest.Priority priority) {
 		this.hostname = hostname;
 		this.localPort = localPort;
 		this.coordinatorHostname = coordinatorHostname;
 		this.requestPort = requestPort;
 		this.returnPort = returnPort;
 		this.meanDelay = meanDelay;
+		this.priority = priority;
 	}
 
 	@Override
@@ -56,12 +62,13 @@ public class Node extends Thread {
 				PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
 				requestWriter.println(hostname);
 				requestWriter.println(localPort);
-				requestWriter.println(CoordinatorRequest.Priority.CRITICAL.toString());
+				requestWriter.println(priority);
 				requestSocket.close();
 
 				// **** Then Wait for the token
 				// Print suitable messages
 				ServerSocket tokenServer = new ServerSocket(localPort);
+				tokenServer.setSoTimeout(TIMEOUT_VALUE);
 				Socket tokenSocket = tokenServer.accept();
 				tokenSocket.close();
 				tokenServer.close();
@@ -82,6 +89,15 @@ public class Node extends Thread {
 				returnSocket.close();
 				System.out.println("<Node> Token returned");
 
+			} catch (ConnectException e) {
+				System.out.println("<Node> Failed to connect.");
+				System.exit(0);
+			} catch (SocketTimeoutException e) {
+				System.out.println("<Node> Socket timed out - Coordinator shut down or newtwork connection lost.");
+				System.exit(0);
+			} catch (SocketException e) {
+				System.out.println("<Node> Connection lost - Coordinator shut down or network connection lost.");
+				System.exit(0);
 			} catch (IOException e) {
 				System.out.println(e);
 				System.exit(1);
@@ -93,8 +109,8 @@ public class Node extends Thread {
 
 	public static void main(String args[]) {
 		// Port and average waiting time are specific to a node. The others are just configurable
-		if (args.length != 5) {
-			System.out.print("Usage: Node [port number] [coordinator host] [request port] [return port] [millisecs]");
+		if (args.length != 6) {
+			System.out.print("Usage: Node [port number] [coordinator host] [request port] [return port] [millisecs] [PRIORITY]");
 			System.exit(1);
 		}
 
@@ -118,11 +134,13 @@ public class Node extends Thread {
 		int requestPort = Integer.parseInt(args[2]);
 		int returnPort = Integer.parseInt(args[3]);
 		int meanDelay = Integer.parseInt(args[4]);
-		System.out.println("Node listening for responses on port " + port + "\n\n");
+		CoordinatorRequest.Priority priority = CoordinatorRequest.Priority.valueOf(args[5]);
+		System.out.println("Node listening for responses on port " + port);
 		System.out.println("Node targeting requests to " + coordinatorHostname + ":" + requestPort);
 		System.out.println("Node returning to " + coordinatorHostname + ":" + returnPort);
+		System.out.println("Node expecting repiles with priority " + priority + "\n\n");
 
-		Node n = new Node(hostname, port, coordinatorHostname, requestPort, returnPort, meanDelay);
+		Node n = new Node(hostname, port, coordinatorHostname, requestPort, returnPort, meanDelay, priority);
 		n.start();
 	}
 
