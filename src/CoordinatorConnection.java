@@ -33,15 +33,16 @@ public class CoordinatorConnection extends Thread {
 			// Read the host and port and store them as a CoordinatorRequest object
 			String host = bufferedReader.readLine();
 			int port = Integer.parseInt(bufferedReader.readLine());
-			CoordinatorRequest request = new CoordinatorRequest(host, port);
-			System.out.println("<CoordinatorConnection> received and recorded request from " + request.host() + ":" + request.port() + " (socket closed)");
+			CoordinatorRequest.Priority priority = CoordinatorRequest.Priority.valueOf(bufferedReader.readLine());
+			CoordinatorRequest request = new CoordinatorRequest(host, port, priority);
+			System.out.println("<CoordinatorConnection> received and recorded request from " + host + ":" + port + " with priority " + priority + " (socket closed)");
 
 			// Pass the CoordinatorRequest to the buffer. This has to be synchronized as the request could be
 			// handled before we can output to console.
 			synchronized(requestBuffer) {
 				requestBuffer.saveRequest(request);
 				requestBuffer.show();
-				Coordinator.writeLogEntry("Request from " + host + ":" + port + " logged. Queue size: " + requestBuffer.size(), "CoordinatorConnection");
+				Coordinator.writeLogEntry("Request from " + host + ":" + port + " logged with priority " + priority + ". Queue size: " + requestBuffer.size(), "CoordinatorConnection");
 			}
 
 			// And close out.

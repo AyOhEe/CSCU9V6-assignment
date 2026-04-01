@@ -56,6 +56,7 @@ public class Node extends Thread {
 				PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
 				requestWriter.println(hostname);
 				requestWriter.println(localPort);
+				requestWriter.println(CoordinatorRequest.Priority.CRITICAL.toString());
 				requestSocket.close();
 
 				// **** Then Wait for the token

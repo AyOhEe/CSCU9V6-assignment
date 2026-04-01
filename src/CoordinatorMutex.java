@@ -51,7 +51,7 @@ public class CoordinatorMutex extends Thread {
 
 		// Grant the token
 		try {
-			System.out.println("<CoordinatorMutex> Sending token to " + nextRequest.host() + ":" + nextRequest.port());
+			System.out.println("<CoordinatorMutex> Sending token to " + nextRequest);
 			Socket requestSocket = new Socket(nextRequest.host(), nextRequest.port());
 			// TODO send message representing token
 		} catch (IOException e) {
@@ -60,7 +60,7 @@ public class CoordinatorMutex extends Thread {
 			System.exit(1);
 		}
 		// Log that we did so
-		Coordinator.writeLogEntry("Issued token to " + nextRequest.host() + ":" + nextRequest.port(), "CoordinatorMutex");
+		Coordinator.writeLogEntry("Issued token to " + nextRequest, "CoordinatorMutex");
 
 		// Retrieve the token
 		try {
@@ -74,6 +74,6 @@ public class CoordinatorMutex extends Thread {
 			System.exit(1);
 		}
 		// Log that we did so
-		Coordinator.writeLogEntry("Received token back from " + nextRequest.host() + ":" + nextRequest.port() + ". Queue size: " + buffer.size(), "CoordinatorMutex");
+		Coordinator.writeLogEntry("Received token back from " + nextRequest + ". Queue size: " + buffer.size(), "CoordinatorMutex");
 	}
 }
