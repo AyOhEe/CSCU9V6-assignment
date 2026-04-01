@@ -26,6 +26,9 @@ public class Node extends Thread {
 	/** How urgently should this {@link Node}'s requests be responded to? */
 	private final CoordinatorRequest.Priority priority;
 
+	/**  */
+	private int requestCounter = 0;
+
 	/**
 	 * Creates a new {@link Node}
 	 * @param hostname The hostname which this {@link Node} will listen on
@@ -57,7 +60,7 @@ public class Node extends Thread {
 			try {
 				// **** Send to the coordinator a token request.
 				// send your ip address and port number
-				System.out.println("<Node> Sending token request to Coordinator");
+				System.out.println("<Node> Sending token request " + requestCounter++ + " to Coordinator");
 				Socket requestSocket = new Socket(coordinatorHostname, requestPort);
 				PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
 				requestWriter.println(hostname);
