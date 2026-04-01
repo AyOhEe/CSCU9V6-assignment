@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  */
 public class Node extends Thread {
 	/** The time, in milliseconds, that a {@link Node} is willing to wait to be handled */
-	private static final int TIMEOUT_VALUE = 60000;
+	private static final int TIMEOUT_VALUE = 20000;
 
 	/** The hostname which this {@link Node} will listen on */
 	private final String hostname;
@@ -26,7 +26,7 @@ public class Node extends Thread {
 	/** How urgently should this {@link Node}'s requests be responded to? */
 	private final CoordinatorRequest.Priority priority;
 
-	/**  */
+	/** How many requests has this {@link Node} sent out to the {@link Coordinator}? */
 	private int requestCounter = 0;
 
 	/**
@@ -57,49 +57,80 @@ public class Node extends Thread {
 			// Wait a little bit between requests
 			CommonUtil.randomNap(100);
 
+			// Send the coordinator a token request.
 			try {
-				// **** Send to the coordinator a token request.
-				// send your ip address and port number
 				System.out.println("<Node> Sending token request " + requestCounter++ + " to Coordinator");
 				Socket requestSocket = new Socket(coordinatorHostname, requestPort);
 				PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
+				requestWriter.println("REQUEST");
 				requestWriter.println(hostname);
 				requestWriter.println(localPort);
 				requestWriter.println(priority);
 				requestSocket.close();
+			} catch (ConnectException e) {
+				System.out.println("<Node> Failed to connect while requesting token.");
+				System.exit(0);
+			} catch (IOException e) {
+				System.out.println(e);
+				System.exit(1);
+			}
 
-				// **** Then Wait for the token
-				// Print suitable messages
-				ServerSocket tokenServer = new ServerSocket(localPort);
+			// Configure the listening server
+			ServerSocket tokenServer;
+			try {
+				tokenServer = new ServerSocket(localPort);
 				tokenServer.setSoTimeout(TIMEOUT_VALUE);
-				Socket tokenSocket = tokenServer.accept();
-				tokenSocket.close();
-				tokenServer.close();
-				System.out.println("<Node> Token received!");
-				// Small nap for readability
-				CommonUtil.nap(500);
+			} catch (IOException e) {
+				System.out.println(e);
+				System.exit(1);
+				break; // This is unreachable, but javac isn't convinced that tokenServer will be initialised
+			}
 
-				// Pretend to do something important. This emulates a critical section
-				System.out.println("<Node> Entering critical section");
-				writeLogEntry("Entering critical section");
-				CommonUtil.randomNap(meanDelay);
-				writeLogEntry("Leaving critical section");
-				System.out.println("<Node> Leaving critical section");
+            // Then wait for the token
+			while (true) {
+				try {
+					Socket tokenSocket = tokenServer.accept();
+					tokenSocket.close();
+					tokenServer.close();
+					System.out.println("<Node> Token received!");
 
-				// **** Return the token
-				// Print suitable messages - also considering communication failures
+					// Small nap for readability
+					CommonUtil.nap(500);
+
+					break;
+				} catch (SocketTimeoutException e) {
+					// Check that the server is still alive. If so, keep listening
+					if (checkAlive()) {
+						continue;
+					}
+
+					// Nope! Complain and exit.
+					System.out.println("<Node> Socket timed out - Coordinator shut down or newtwork connection lost.");
+					System.exit(0);
+				} catch (SocketException e) {
+					System.out.println("<Node> Connection lost - Coordinator shut down or network connection lost.");
+					System.exit(0);
+				} catch (IOException e) {
+					System.out.println(e);
+					System.exit(1);
+				}
+			}
+
+			// Pretend to do something important. This emulates a critical section
+			System.out.println("<Node> Entering critical section");
+			writeLogEntry("Entering critical section");
+			CommonUtil.randomNap(meanDelay);
+			writeLogEntry("Leaving critical section");
+			System.out.println("<Node> Leaving critical section");
+
+
+			// Return the token
+			try {
 				Socket returnSocket = new Socket(coordinatorHostname, returnPort);
 				returnSocket.close();
 				System.out.println("<Node> Token returned");
-
 			} catch (ConnectException e) {
-				System.out.println("<Node> Failed to connect.");
-				System.exit(0);
-			} catch (SocketTimeoutException e) {
-				System.out.println("<Node> Socket timed out - Coordinator shut down or newtwork connection lost.");
-				System.exit(0);
-			} catch (SocketException e) {
-				System.out.println("<Node> Connection lost - Coordinator shut down or network connection lost.");
+				System.out.println("<Node> Failed to connect while returning token.");
 				System.exit(0);
 			} catch (IOException e) {
 				System.out.println(e);
@@ -108,6 +139,20 @@ public class Node extends Thread {
 		}
 	}
 
+	/**
+	 * Returns {@code true} if we can successfully reach the {@link CoordinatorReceiver}
+	 */
+	private boolean checkAlive() {
+		try {
+			Socket requestSocket = new Socket(coordinatorHostname, requestPort);
+			PrintWriter requestWriter = new PrintWriter(requestSocket.getOutputStream(), true);
+			requestWriter.println("HEARTBEAT"); // Let the Coordinator know that this is just a check
+			requestSocket.close();
+		} catch (IOException e) {
+			return false;
+        }
+		return true;
+    }
 
 
 	public static void main(String args[]) {

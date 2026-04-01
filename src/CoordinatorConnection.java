@@ -30,23 +30,41 @@ public class CoordinatorConnection extends Thread {
 		    InputStream inputStream = socket.getInputStream();
 		    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-			// Read the host and port and store them as a CoordinatorRequest object
-			String host = bufferedReader.readLine();
-			int port = Integer.parseInt(bufferedReader.readLine());
-			CoordinatorRequest.Priority priority = CoordinatorRequest.Priority.valueOf(bufferedReader.readLine());
-			CoordinatorRequest request = new CoordinatorRequest(host, port, priority);
-			System.out.println("<CoordinatorConnection> received and recorded request from " + host + ":" + port + " with priority " + priority + " (socket closed)");
+			// What kind of request is it?
+			String type = bufferedReader.readLine();
+			switch (type) {
+				// Just checking that the server is still alive.
+                case "HEARTBEAT" -> {
+					socket.close();
+				}
 
-			// Pass the CoordinatorRequest to the buffer. This has to be synchronized as the request could be
-			// handled before we can output to console.
-			synchronized(requestBuffer) {
-				requestBuffer.saveRequest(request);
-				requestBuffer.show();
-				Coordinator.writeLogEntry("Request from " + host + ":" + port + " logged with priority " + priority + ". Queue size: " + requestBuffer.size(), "CoordinatorConnection");
-			}
+				// Asking for the token
+				case "REQUEST" -> {
+					// Read the host and port and store them as a CoordinatorRequest object
+					String host = bufferedReader.readLine();
+					int port = Integer.parseInt(bufferedReader.readLine());
+					CoordinatorRequest.Priority priority = CoordinatorRequest.Priority.valueOf(bufferedReader.readLine());
+					CoordinatorRequest request = new CoordinatorRequest(host, port, priority);
+					System.out.println("<CoordinatorConnection> received and recorded request from " + host + ":" + port + " with priority " + priority + " (socket closed)");
 
-			// And close out.
-		    socket.close();
+					// Pass the CoordinatorRequest to the buffer. This has to be synchronized as the request could be
+					// handled before we can output to console.
+					synchronized(requestBuffer) {
+						requestBuffer.saveRequest(request);
+						requestBuffer.show();
+						Coordinator.writeLogEntry("Request from " + host + ":" + port + " logged with priority " + priority + ". Queue size: " + requestBuffer.size(), "CoordinatorConnection");
+					}
+
+					// And close out.
+					socket.close();
+				}
+
+				// Anything else should complain
+                default -> {
+                    System.out.println("<CoordinatorConnection> Received unknown request type: " + type);
+                    System.exit(-1);
+                }
+            }
 		} 
 		catch (IOException e){
 			System.out.println("<CoordinatorConnection> Exception occurred in CoordinatorConnection: ");
